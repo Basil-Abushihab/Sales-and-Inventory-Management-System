@@ -1,0 +1,92 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+    engineType = "binary"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+
+// -----------------------------
+// Prisma Models for the Project
+// -----------------------------
+
+model Customer {
+  CustomerID   Int      @id @default(autoincrement())
+  Name         String
+  Phone        String?
+  Email        String?  @unique
+  Address      String?
+
+  // Relations
+  orders       Order[]
+}
+
+model Product {
+  ProductID      Int       @id @default(autoincrement())
+  Name           String
+  UnitPrice      Float    
+  Status         Boolean    @default(true)
+  ReorderLevel   Int
+
+  // Relations
+  orderDetails   OrderDetail[]
+  inventories    Inventory[]
+}
+
+model Warehouse {
+  WarehouseID   Int      @id @default(autoincrement())
+  WarehouseName String
+  Location      String?
+
+  // Relations
+  inventories    Inventory[]
+}
+
+model Inventory {
+  // Composite Primary Key
+  WarehouseID    Int
+  ProductID      Int
+  QuantityInStock Int     @default(0)
+
+  // Relations
+  warehouse      Warehouse @relation(fields: [WarehouseID], references: [WarehouseID])
+  product        Product   @relation(fields: [ProductID], references: [ProductID])
+
+  @@id([WarehouseID, ProductID])
+}
+
+model Order {
+  OrderID      Int        @id @default(autoincrement())
+  CustomerID   Int
+  OrderDate    DateTime   @default(now())
+  TotalAmount  Float
+  Status       String
+
+  // Relations
+  customer     Customer    @relation(fields: [CustomerID], references: [CustomerID])
+  orderDetails OrderDetail[]
+}
+
+model OrderDetail {
+  // Composite Primary Key
+  OrderID    Int
+  ProductID  Int
+  Quantity   Int
+  UnitPrice  Float 
+  LineTotal  Float
+
+  // Relations
+  order     Order   @relation(fields: [OrderID], references: [OrderID])
+  product   Product @relation(fields: [ProductID], references: [ProductID])
+
+  @@id([OrderID, ProductID])
+}
